@@ -32,7 +32,8 @@ A Video on how to set it up will follow here shortly!
 
 1. **Setup the Environment**:
    - Ensure all dependencies are installed. Use `pip install -r requirements.txt` for any missing packages.
-   - Edit the env.template.txt and rename it to .env
+   - Whisper may also require PyTorch to be installed. Use the following command to install it: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu`.
+   - Edit the `env.template.txt` and rename it to `.env`.
 
 2. **Run the Program**:
    - Start the script using Python:  
