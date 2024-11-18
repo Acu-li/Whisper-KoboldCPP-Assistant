@@ -38,7 +38,7 @@ A Video on how to set it up will follow here shortly!
 2. **Run the Program**:
    - Start the script using Python:  
      ```bash
-     python sophie_ai.py
+     python whisper2.py
      ```
    - Choose a microphone by entering its corresponding number.
 
