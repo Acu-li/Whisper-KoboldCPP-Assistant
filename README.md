@@ -49,3 +49,9 @@ A Video on how to set it up will follow here shortly!
 
 4. **Reset Chat History**: (Optional)
    - Speak a reset keyword (e.g., "reset") to clear the chat history.
+
+## Planned for the future
+
+- Function calling, so it can turn on lights, or play music. Kinda Siri Like.
+- Better Keyword Spotting, its pretty shitty currently.
+- English CMD information.
