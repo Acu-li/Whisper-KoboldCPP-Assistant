@@ -23,7 +23,7 @@ A STT/TTS assistant using KoboldCPP as its llm backend.
   - `pygame`
   - `dotenv`
   - `winsound` (for Windows)
-- KoboldCPP Backend Server (https://github.com/LostRuins/koboldcpp)
+- KoboldCPP Instance (https://github.com/LostRuins/koboldcpp)
 - XTTS-API-SERVER (https://github.com/daswer123/xtts-api-server)
 
 ## How to Use
