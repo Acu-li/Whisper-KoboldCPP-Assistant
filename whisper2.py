@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 import requests
 import tempfile
 import winsound
+from datetime import datetime
+import pytz
 
 load_dotenv()
 LOCALHOST_ENDPOINT = os.getenv('LOCALHOST_ENDPOINT') # URL des Koboldcpp-Servers
@@ -46,12 +48,21 @@ def choose_microphone():
     mic_index = int(input("Wähle ein Mikrofon (Nummer): "))
     return mic_index
 
+def get_berlin_time():
+    berlin_tz = pytz.timezone("Europe/Berlin")
+    berlin_time = datetime.now(berlin_tz).strftime("%H:%M")  # 24-Stunden-Format ohne Sekunden
+    return berlin_time
+
 def send_prompt(user, prompt):
+    current_time = get_berlin_time()  # Deutsche Zeit abrufen
+    authors_note = f"[Authors Note: It is currently {current_time} in berlin,Germany]"
+    augmented_prompt = f"{prompt} {authors_note}"
+    
     post_url = f'{LOCALHOST_ENDPOINT}/api/v1/generate'
     instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + " the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to."
     for interaction in chat_history:
         instruct_prompt += f"<|eot_id|><|start_header_id|>user<|end_header_id|>{interaction['user_name']}: {interaction['user_prompt']}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {interaction['bot_response']}"
-    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: "
+    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {augmented_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: "
     payload = {
         "max_context_length": max_context_length,
         "max_length": max_length,
