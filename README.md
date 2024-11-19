@@ -28,7 +28,7 @@ A STT/TTS assistant using KoboldCPP as its llm backend.
 
 ## How to Use
 
-A Video on how to set it up will follow here shortly!
+<iframe width="1730" height="697" src="https://www.youtube.com/embed/ifzhvX6HnIc" title="How to setup Whisper-KoboldCPP-Assistant" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 1. **Setup the Environment**:
    - Ensure all dependencies are installed. Use `pip install -r requirements.txt` for any missing packages.
