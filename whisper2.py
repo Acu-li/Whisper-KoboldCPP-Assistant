@@ -11,10 +11,13 @@ import tempfile
 import winsound
 from datetime import datetime
 import pytz
+import warnings
 
 load_dotenv()
 LOCALHOST_ENDPOINT = os.getenv('LOCALHOST_ENDPOINT') # URL des Koboldcpp-Servers
 XTTS_ENDPOINT = os.getenv('XTTS_ENDPOINT') # URL des XTTS-Servers
+
+warnings.filterwarnings("ignore", category=FutureWarning, module="whisper")
 
 bot_name = "Sophie"
 max_context_length = 6000
@@ -30,7 +33,7 @@ KEYWORDS = ["hey sophie", "hey, sophie", "sophie"]
 RESET_KEYWORDS = [
     "reset your memorys", "reset your memories", "reset", "reset memorys", "reset memory", "reset memories"
 ]
-RECORDING_DURATION = 3
+RECORDING_DURATION = 7
 
 chat_history = []
 reset_active = False
@@ -94,7 +97,7 @@ def reset_chat_history():
 def listen_for_keyword(mic_index):
     print("Warte auf das Keyword...")
     while True:
-        audio = record_audio(5)
+        audio = record_audio(3)
         transcription = transcribe_audio(audio).lower()
         print(f"Erkannter Text: {transcription}")
 
