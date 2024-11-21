@@ -48,7 +48,7 @@ def choose_microphone():
     for idx, device in enumerate(devices):
         if device['max_input_channels'] > 0:
             print(f"{idx}: {device['name']}")
-    mic_index = int(input("Wähle ein Mikrofon (Nummer): "))
+    mic_index = int(input("Choose a Microphone (Number): "))
     return mic_index
 
 def get_berlin_time():
@@ -78,46 +78,46 @@ def send_prompt(user, prompt):
     return response.text
 
 def record_audio(duration):
-    print("Aufnahme läuft...")
+    print("Recording...")
     audio = sd.rec(int(duration * 16000), samplerate=16000, channels=1, dtype='float32')
     sd.wait()
-    print("Aufnahme beendet.")
+    print("Recording stopped")
     return np.squeeze(audio)
 
 def transcribe_audio(audio):
-    print("Audio wird transkribiert...")
+    print("Transcribing....")
     result = model.transcribe(audio, fp16=False)
     return result['text']
 
 def reset_chat_history():
     global chat_history
     chat_history = []
-    print("Die Konversationshistorie wurde zurückgesetzt.")
+    print("Context was reset")
 
 def listen_for_keyword(mic_index):
-    print("Warte auf das Keyword...")
+    print("Waiting for Keyword...")
     while True:
         audio = record_audio(3)
         transcription = transcribe_audio(audio).lower()
-        print(f"Erkannter Text: {transcription}")
+        print(f"Recognised Text: {transcription}")
 
         for keyword in KEYWORDS:
             if keyword in transcription:
-                print(f"Keyword '{keyword}' erkannt!")
+                print(f"Keyword '{keyword}' recognised!")
                 play_sound()
                 if keyword == "sophie":
-                    print("Keyword 'Sophie' erkannt! Starte Aufnahme...")
+                    print("Keyword 'Sophie' recognised...")
                     return "sophie"
                 else:
-                    print("Warte weiter auf 'Sophie'...")
+                    print("Waiting for 'Sophie'...")
                     continue
 
         for reset_keyword in RESET_KEYWORDS:
             if reset_keyword in transcription:
-                print(f"Reset-Keyword erkannt: {reset_keyword}")
+                print(f"Reset-Keyword recognised: {reset_keyword}")
                 reset_chat_history()
                 play_sound()
-                print("Warte nach Reset weiter auf das Keyword...")
+                print("Waiting for a new keyword...")
                 return "reset"
 
 def play_tts(text):
@@ -132,37 +132,37 @@ def play_tts(text):
     }
     response = requests.post(url, json=data, headers=headers)
     if response.status_code == 200:
-        print("TTS-Anfrage erfolgreich gesendet!")
+        print("TTS-Request successful")
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio_file:
             temp_audio_file.write(response.content)
             temp_audio_file_path = temp_audio_file.name
-            print(f"Audiodatei gespeichert als {temp_audio_file_path}")
+            print(f"Saved as {temp_audio_file_path}")
         winsound.PlaySound(temp_audio_file_path, winsound.SND_FILENAME)
         os.remove(temp_audio_file_path)
-        print("Audiodatei gelöscht.")
+        print("Sound file deleted")
     else:
-        print(f"TTS-Fehler: {response.status_code} - {response.text}")
+        print(f"TTS-Error: {response.status_code} - {response.text}")
 
 def main():
-    print("Kontinuierliches Keyword-Spotting läuft...")
+    print("Keyword Spotting is now actively listening...")
     mic_index = choose_microphone()
     
     while True:
         keyword_transcription = listen_for_keyword(mic_index)
         
         if keyword_transcription == "sophie":
-            print("Aufnahme der nächsten Äußerung...")
+            print("Recording prompt...")
             audio = record_audio(RECORDING_DURATION)
             text = transcribe_audio(audio)
-            print(f"Transkribierter Text: {text}")
+            print(f"Transcribed Text: {text}")
             
-            print("Sende an das LLM...")
+            print("Sending to LLM...")
             response = send_prompt("User", f"{keyword_transcription} {text}")
             
             try:
                 response_text = json.loads(response)['results'][0]['text']
             except (KeyError, IndexError, json.JSONDecodeError):
-                response_text = "Fehler beim Abrufen der Antwort."
+                response_text = "Error. Idk what happened"
             
             print(f"{bot_name}: {response_text}")
             
