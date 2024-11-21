@@ -55,4 +55,3 @@ https://www.youtube.com/watch?v=ifzhvX6HnIc
 
 - Function calling, so it can turn on lights, or play music. Kinda Siri Like.
 - Better Keyword Spotting, its pretty shitty currently.
-- English CMD information.
