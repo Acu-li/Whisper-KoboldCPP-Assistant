@@ -1,5 +1,5 @@
-API|An API (Application Programming Interface) is a set of rules and protocols that allows different software applications to communicate with each other. It acts as an intermediary between different systems, enabling them to work together seamlessly.
-REST API|A REST API (Representational State Transfer) is a type of API that uses HTTP requests to access and manipulate data, often used in web applications for simplicity and scalability.
-GraphQL|GraphQL is a query language for APIs that provides a more flexible and efficient alternative to REST, allowing clients to request exactly the data they need.
-Webhooks|Webhooks are a lightweight API concept where one system sends real-time data to another system based on predefined triggers, often used for notifications or integrations.
-OAuth|OAuth is an open standard for authorization that allows secure access to resources without sharing user credentials, commonly used for third-party login services.
+Heavy Metal|Heavy Metal is a genre of rock music known for its loud and aggressive sound, characterized by distorted guitars and emphatic rhythms.  
+Sabaton|Sabaton is a Swedish heavy metal band known for their lyrics inspired by historical wars and battles, often delivering epic and powerful songs.  
+Powerwolf|Powerwolf is a German power metal band, celebrated for their theatrical themes involving werewolves, vampires, and religious motifs, paired with catchy, melodic power metal.  
+Erdbeer marmelade brot mit honig|Toms Erdbeermarmeladebrotmithonig is a fictional series where Tom, the main character, faces various challenges and adventures to ultimately enjoy his favorite snack: bread with strawberry jam and honey.  
+Pizza|Pizza is a popular Italian dish consisting of a round, flat base of dough topped with various ingredients, often including tomato sauce and cheese.  

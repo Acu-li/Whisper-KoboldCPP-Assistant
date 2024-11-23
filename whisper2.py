@@ -11,6 +11,7 @@ import tempfile
 from datetime import datetime
 import pytz
 import warnings
+import winsound
 from sentence_transformers import SentenceTransformer, util
 
 load_dotenv()
@@ -29,7 +30,7 @@ snip_words = ["User:", "Bot:", "You:", "Me:", "{}:".format(bot_name)]
 MODEL_TYPE = "base"
 model = whisper.load_model(MODEL_TYPE)
 
-KEYWORDS = ["hey sophie", "hey, sophie", "sophie", "test"]
+KEYWORDS = ["hey sophie", "hey, sophie", "sophie"]
 RESET_KEYWORDS = [
     "reset your memorys", "reset your memories", "reset", "reset memorys", "reset memory", "reset memories"
 ]
@@ -48,30 +49,23 @@ def load_database(file_path):
     with open(file_path, 'r') as file:
         for line in file:
             key, value = line.strip().split('|', 1)
-            database[key] = value
+            database[key.strip()] = value.strip()  # Leerzeichen entfernen
     return database
 
 def search_database(prompt, database):
-    # Vector-DB durchsuchen
     relevant_results = []
-    for entry in database:
-        # Relevanz-Bedingung: Nutze einfache Schlüsselwortprüfung oder eine Ähnlichkeitsmetrik
-        if is_relevant(prompt, entry):  # `is_relevant` muss definiert werden
-            relevant_results.append(entry)
+    for key, value in database.items():
+        if is_relevant(prompt, key):  # Überprüfe nur die Schlüssel
+            relevant_results.append(f"{key}: {value}")  # Schlüssel und Wert zusammenführen
     
-    # Rückgabe: Nur relevante Ergebnisse oder ein leerer String
-    if relevant_results:
-        return " ".join(relevant_results)  # Alles zusammenfügen, wenn es passt
-    else:
-        return ""  # Nichts hinzufügen, wenn keine Relevanz
+    return " | ".join(relevant_results) if relevant_results else ""  # Ergebnisse zusammenfügen
 
-def is_relevant(prompt, entry):
-    # Einfache Schlüsselwortsuche (ersetze das bei Bedarf durch Ähnlichkeitsmetriken)
-    keywords = prompt.lower().split()  # Alle Wörter im Prompt
-    for word in keywords:
-        if word in entry.lower():  # Wenn ein Wort im Eintrag ist, relevant
-            return True
-    return False
+
+def is_relevant(prompt, key):
+    prompt_lower = prompt.lower()
+    key_lower = key.lower()
+    return key_lower in prompt_lower  # Wenn der Schlüssel im Prompt vorkommt, ist er relevant
+
 
 
 def choose_microphone():
@@ -90,26 +84,26 @@ def get_berlin_time():
 def send_prompt(user, prompt):
     current_time = get_berlin_time()  # Deutsche Zeit abrufen
     
-    # Datenbank laden und durchsuchen
-    database = load_database("db.txt")
-    db_result = search_database(prompt, database)  # Suche mit verbesserter Logik
+    database = load_database("db.txt")  # Lädt die Datenbank
+    db_result = search_database(prompt, database)  # Sucht relevante Informationen zum aktuellen Prompt
+
     
     # Authors Note mit Bedingung für Datenbank-Ergebnisse
-    if db_result:  # Nur wenn db_result nicht leer ist
-        authors_note = f"[Authors Note: It is currently {current_time} in Berlin, Germany. Database: {db_result} This is only information for you, it is not coming from the user.]"
+    if db_result:
+        authors_note = f"[Authors Note: Database results: {db_result}. This is only information for you, it is not coming from the user.]"
     else:
-        authors_note = f"[Authors Note: It is currently {current_time} in Berlin, Germany. This is only information for you, it is not coming from the user.]"
-    
+        authors_note = ""  # Keine Authors Note, wenn keine Ergebnisse gefunden wurden
+
     # Prompt erweitern und an die API senden
     post_url = f'{LOCALHOST_ENDPOINT}/api/v1/generate'
-    instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + " the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to."
+    instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + ", the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to. Keep your responses concise but maintain the warmth and humor that makes you their favorite person."
     
     # Historie einfügen
     for interaction in chat_history:
         instruct_prompt += f"<|eot_id|><|start_header_id|>user<|end_header_id|>{interaction['user_name']}: {interaction['user_prompt']}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {interaction['bot_response']}"
     
     # User-Prompt einfügen (authors_note bleibt separater Zusatz)
-    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {authors_note}"
+    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {prompt}{authors_note}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}:"
     payload = {
         "max_context_length": max_context_length,
         "max_length": max_length,
@@ -153,7 +147,7 @@ def listen_for_keyword(mic_index):
             if keyword in transcription:
                 print(f"Keyword '{keyword}' recognised!")
                 play_sound()
-                if keyword == ["sophie", "test"]:
+                if keyword == "sophie":
                     print("Keyword 'Sophie' recognised...")
                     return "sophie"
                 else:
@@ -198,7 +192,7 @@ def main():
     while True:
         keyword_transcription = listen_for_keyword(mic_index)
         
-        if keyword_transcription in ["sophie", "test"]:
+        if keyword_transcription == "sophie":
             print("Recording prompt...")
             audio = record_audio(RECORDING_DURATION)
             text = transcribe_audio(audio)
