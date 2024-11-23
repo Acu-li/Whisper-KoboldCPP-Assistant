@@ -8,10 +8,11 @@ import pygame
 from dotenv import load_dotenv
 import requests
 import tempfile
-import winsound
 from datetime import datetime
 import pytz
 import warnings
+import winsound
+from sentence_transformers import SentenceTransformer, util
 
 load_dotenv()
 LOCALHOST_ENDPOINT = os.getenv('LOCALHOST_ENDPOINT') # URL des Koboldcpp-Servers
@@ -43,6 +44,30 @@ def play_sound(filename="bling.mp3"):
     pygame.mixer.music.load(filename)
     pygame.mixer.music.play()
 
+def load_database(file_path):
+    database = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            key, value = line.strip().split('|', 1)
+            database[key.strip()] = value.strip()  # Leerzeichen entfernen
+    return database
+
+def search_database(prompt, database):
+    relevant_results = []
+    for key, value in database.items():
+        if is_relevant(prompt, key):  # Überprüfe nur die Schlüssel
+            relevant_results.append(f"{key}: {value}")  # Schlüssel und Wert zusammenführen
+    
+    return " | ".join(relevant_results) if relevant_results else ""  # Ergebnisse zusammenfügen
+
+
+def is_relevant(prompt, key):
+    prompt_lower = prompt.lower()
+    key_lower = key.lower()
+    return key_lower in prompt_lower  # Wenn der Schlüssel im Prompt vorkommt, ist er relevant
+
+
+
 def choose_microphone():
     devices = sd.query_devices()
     for idx, device in enumerate(devices):
@@ -58,14 +83,27 @@ def get_berlin_time():
 
 def send_prompt(user, prompt):
     current_time = get_berlin_time()  # Deutsche Zeit abrufen
-    authors_note = f"[Authors Note: It is currently {current_time} in berlin,Germany]"
-    augmented_prompt = f"{prompt} {authors_note}"
     
+    database = load_database("db.txt")  # Lädt die Datenbank
+    db_result = search_database(prompt, database)  # Sucht relevante Informationen zum aktuellen Prompt
+
+    
+    # Authors Note mit Bedingung für Datenbank-Ergebnisse
+    if db_result:
+        authors_note = f"[Authors Note: Database results: {db_result}. This is only information for you, it is not coming from the user.]"
+    else:
+        authors_note = ""  # Keine Authors Note, wenn keine Ergebnisse gefunden wurden
+
+    # Prompt erweitern und an die API senden
     post_url = f'{LOCALHOST_ENDPOINT}/api/v1/generate'
-    instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + " the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to."
+    instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + ", the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to. Keep your responses concise but maintain the warmth and humor that makes you their favorite person."
+    
+    # Historie einfügen
     for interaction in chat_history:
         instruct_prompt += f"<|eot_id|><|start_header_id|>user<|end_header_id|>{interaction['user_name']}: {interaction['user_prompt']}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {interaction['bot_response']}"
-    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {augmented_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: "
+    
+    # User-Prompt einfügen (authors_note bleibt separater Zusatz)
+    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {prompt}{authors_note}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}:"
     payload = {
         "max_context_length": max_context_length,
         "max_length": max_length,
@@ -74,8 +112,12 @@ def send_prompt(user, prompt):
         "temperature": temperature,
         "stopping_strings": json.dumps(snip_words)
     }
+    
+    # Anfrage senden
     response = requests.post(post_url, json=payload)
     return response.text
+
+
 
 def record_audio(duration):
     print("Recording...")
