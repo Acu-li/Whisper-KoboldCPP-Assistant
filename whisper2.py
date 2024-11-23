@@ -8,10 +8,10 @@ import pygame
 from dotenv import load_dotenv
 import requests
 import tempfile
-import winsound
 from datetime import datetime
 import pytz
 import warnings
+from sentence_transformers import SentenceTransformer, util
 
 load_dotenv()
 LOCALHOST_ENDPOINT = os.getenv('LOCALHOST_ENDPOINT') # URL des Koboldcpp-Servers
@@ -29,7 +29,7 @@ snip_words = ["User:", "Bot:", "You:", "Me:", "{}:".format(bot_name)]
 MODEL_TYPE = "base"
 model = whisper.load_model(MODEL_TYPE)
 
-KEYWORDS = ["hey sophie", "hey, sophie", "sophie"]
+KEYWORDS = ["hey sophie", "hey, sophie", "sophie", "test"]
 RESET_KEYWORDS = [
     "reset your memorys", "reset your memories", "reset", "reset memorys", "reset memory", "reset memories"
 ]
@@ -42,6 +42,37 @@ def play_sound(filename="bling.mp3"):
     pygame.mixer.init()
     pygame.mixer.music.load(filename)
     pygame.mixer.music.play()
+
+def load_database(file_path):
+    database = {}
+    with open(file_path, 'r') as file:
+        for line in file:
+            key, value = line.strip().split('|', 1)
+            database[key] = value
+    return database
+
+def search_database(prompt, database):
+    # Vector-DB durchsuchen
+    relevant_results = []
+    for entry in database:
+        # Relevanz-Bedingung: Nutze einfache Schlüsselwortprüfung oder eine Ähnlichkeitsmetrik
+        if is_relevant(prompt, entry):  # `is_relevant` muss definiert werden
+            relevant_results.append(entry)
+    
+    # Rückgabe: Nur relevante Ergebnisse oder ein leerer String
+    if relevant_results:
+        return " ".join(relevant_results)  # Alles zusammenfügen, wenn es passt
+    else:
+        return ""  # Nichts hinzufügen, wenn keine Relevanz
+
+def is_relevant(prompt, entry):
+    # Einfache Schlüsselwortsuche (ersetze das bei Bedarf durch Ähnlichkeitsmetriken)
+    keywords = prompt.lower().split()  # Alle Wörter im Prompt
+    for word in keywords:
+        if word in entry.lower():  # Wenn ein Wort im Eintrag ist, relevant
+            return True
+    return False
+
 
 def choose_microphone():
     devices = sd.query_devices()
@@ -58,14 +89,27 @@ def get_berlin_time():
 
 def send_prompt(user, prompt):
     current_time = get_berlin_time()  # Deutsche Zeit abrufen
-    authors_note = f"[Authors Note: It is currently {current_time} in berlin,Germany]"
-    augmented_prompt = f"{prompt} {authors_note}"
     
+    # Datenbank laden und durchsuchen
+    database = load_database("db.txt")
+    db_result = search_database(prompt, database)  # Suche mit verbesserter Logik
+    
+    # Authors Note mit Bedingung für Datenbank-Ergebnisse
+    if db_result:  # Nur wenn db_result nicht leer ist
+        authors_note = f"[Authors Note: It is currently {current_time} in Berlin, Germany. Database: {db_result} This is only information for you, it is not coming from the user.]"
+    else:
+        authors_note = f"[Authors Note: It is currently {current_time} in Berlin, Germany. This is only information for you, it is not coming from the user.]"
+    
+    # Prompt erweitern und an die API senden
     post_url = f'{LOCALHOST_ENDPOINT}/api/v1/generate'
     instruct_prompt = "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are " + bot_name + " the user’s closest childhood friend, always there for them no matter what. You’re warm, funny, and quick-witted, with a knack for making people feel comfortable. You love chatting, cracking jokes, and being supportive whenever they need someone to talk to. This is roleplay, and you are their trusted friend, not an AI. Never break character and always be their favorite person to talk to."
+    
+    # Historie einfügen
     for interaction in chat_history:
         instruct_prompt += f"<|eot_id|><|start_header_id|>user<|end_header_id|>{interaction['user_name']}: {interaction['user_prompt']}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {interaction['bot_response']}"
-    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {augmented_prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: "
+    
+    # User-Prompt einfügen (authors_note bleibt separater Zusatz)
+    append_prompt = f"<|eot_id|><|start_header_id|>user<|end_header_id|>{user}: {prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>{bot_name}: {authors_note}"
     payload = {
         "max_context_length": max_context_length,
         "max_length": max_length,
@@ -74,8 +118,12 @@ def send_prompt(user, prompt):
         "temperature": temperature,
         "stopping_strings": json.dumps(snip_words)
     }
+    
+    # Anfrage senden
     response = requests.post(post_url, json=payload)
     return response.text
+
+
 
 def record_audio(duration):
     print("Recording...")
@@ -105,7 +153,7 @@ def listen_for_keyword(mic_index):
             if keyword in transcription:
                 print(f"Keyword '{keyword}' recognised!")
                 play_sound()
-                if keyword == "sophie":
+                if keyword == ["sophie", "test"]:
                     print("Keyword 'Sophie' recognised...")
                     return "sophie"
                 else:
@@ -150,7 +198,7 @@ def main():
     while True:
         keyword_transcription = listen_for_keyword(mic_index)
         
-        if keyword_transcription == "sophie":
+        if keyword_transcription in ["sophie", "test"]:
             print("Recording prompt...")
             audio = record_audio(RECORDING_DURATION)
             text = transcribe_audio(audio)
