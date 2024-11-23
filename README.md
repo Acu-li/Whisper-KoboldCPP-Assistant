@@ -35,6 +35,7 @@ https://www.youtube.com/watch?v=ifzhvX6HnIc
    - Ensure all dependencies are installed. Use `pip install -r requirements.txt` for any missing packages.
    - Whisper may also require PyTorch to be installed. Use the following command to install it: `pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu`.
    - Edit the `env.template.txt` and rename it to `.env`.
+   - Edit the `db.txt` to include everything your LLM needs to know. If the corresponding word is in the prompt, the corresponding information will be sent with the author's note.
 
 2. **Run the Program**:
    - Start the script using Python:  
