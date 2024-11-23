@@ -3,4 +3,6 @@ python-dotenv
 numpy
 pygame
 sounddevice
-whisper
+openai-whisper
+winsound
+sentence_transformers
