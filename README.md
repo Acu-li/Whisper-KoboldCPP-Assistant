@@ -9,6 +9,7 @@ A STT/TTS assistant using KoboldCPP as its llm backend.
 - **Conversational AI**: Sends the transcribed text to a local LLM endpoint for response generation.
 - **Text-to-Speech**: Converts the AI's response into speech and plays it back using the XTTS server.
 - **Chat History Management**: Maintains a history of interactions, with the ability to reset it using specific keywords like "reset."
+- **Database**: If a specific word is in the prompt, a database will be searched, and Information within that database will be added to the context.
 
 ## Requirements
 
@@ -56,3 +57,4 @@ https://www.youtube.com/watch?v=ifzhvX6HnIc
 
 - Function calling, so it can turn on lights, or play music. Kinda Siri Like.
 - Better Keyword Spotting, its pretty shitty currently.
+- LLM can add stuff to the database itself, kinda like long term memory.
