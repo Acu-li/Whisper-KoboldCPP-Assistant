@@ -23,7 +23,6 @@ A STT/TTS assistant using KoboldCPP as its llm backend.
   - `whisper`
   - `pygame`
   - `dotenv`
-  - `winsound` (for Windows)
 - KoboldCPP Instance (https://github.com/LostRuins/koboldcpp)
 - XTTS-API-SERVER (https://github.com/daswer123/xtts-api-server)
 
@@ -41,7 +40,7 @@ https://www.youtube.com/watch?v=ifzhvX6HnIc
 2. **Run the Program**:
    - Start the script using Python:  
      ```bash
-     python whisper2.py
+     python whispercuda.py
      ```
    - Choose a microphone by entering its corresponding number.
 
