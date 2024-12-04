@@ -1,8 +1,12 @@
-requests
-python-dotenv
 numpy
-pygame
 sounddevice
-openai-whisper
-winsound
-sentence_transformers
+whisper
+pygame
+python-dotenv
+requests
+tempfile
+datetime
+pytz
+warnings
+sentence-transformers
+torch  # notwendig für sentence-transformers und whisper
