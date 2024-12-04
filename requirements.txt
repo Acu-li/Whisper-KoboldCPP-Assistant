@@ -4,7 +4,6 @@ whisper
 pygame
 python-dotenv
 requests
-tempfile
 datetime
 pytz
 warnings
