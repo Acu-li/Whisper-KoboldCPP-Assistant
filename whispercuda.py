@@ -12,6 +12,7 @@ from datetime import datetime
 import pytz
 import warnings
 from sentence_transformers import SentenceTransformer, util
+import torch
 
 load_dotenv()
 LOCALHOST_ENDPOINT = os.getenv('LOCALHOST_ENDPOINT')  # URL des Koboldcpp-Servers
@@ -27,7 +28,8 @@ temperature = 0.5
 snip_words = ["User:", "Bot:", "You:", "Me:", "{}:".format(bot_name)]
 
 MODEL_TYPE = "small"
-model = whisper.load_model(MODEL_TYPE)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = whisper.load_model(MODEL_TYPE, device=device)
 
 KEYWORDS = ["hey sophie", "hey, sophie", "sophie"]
 RESET_KEYWORDS = [
@@ -93,10 +95,14 @@ def search_database(prompt, database):
     
     return " | ".join(relevant_results) if relevant_results else ""  # Ergebnisse zusammenfügen
 
+# Laden des SentenceTransformer-Modells
+st_model = SentenceTransformer('all-MiniLM-L6-v2', device='cuda' if torch.cuda.is_available() else 'cpu')
+
 def is_relevant(prompt, key):
-    prompt_lower = prompt.lower()
-    key_lower = key.lower()
-    return key_lower in prompt_lower
+    # Nutze SentenceTransformer, um Ähnlichkeiten zu prüfen
+    embeddings = st_model.encode([prompt, key], convert_to_tensor=True)
+    similarity = util.cos_sim(embeddings[0], embeddings[1])
+    return similarity.item() > 0.7  # Relevanz basierend auf einem Schwellenwert
 
 def choose_microphone():
     devices = sd.query_devices()
